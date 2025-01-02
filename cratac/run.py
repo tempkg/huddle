@@ -14,7 +14,7 @@ import pandas as pd
 # collect input arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--model', type=str, default='local', help='local/local-fc/lsf')
-parser.add_argument('-nc', type=str, default=8000, help='--force-cells number')
+parser.add_argument('-nc', type=str, default=10000, help='--force-cells number')
 parser.add_argument('-t', '--table', type=str, default='input.txt', required=True, help='data table for run multiple samples')
 
 parser.add_argument('-o', '--outdir', type=str, default='out_cellranger_atac', help='out dir')
@@ -39,7 +39,7 @@ def Main():
         os.mkdir(outdir)
     
 
-    CallSeqCount_MultipleSamples(f_bsub, f_config, script, args.model, args.nc, args.table, outdir)    
+    CallSeqCount_MultipleSamples(fbsub, fconfig, fscript, args.model, args.nc, args.table, outdir)    
 
     
 
