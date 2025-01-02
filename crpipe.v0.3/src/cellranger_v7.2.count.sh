@@ -85,6 +85,16 @@ if [[ $RUN == 'local-fc' ]]; then
 fi
 
 
+if [[ $RUN == 'local-chem' ]]; then
+    ${CELLRANGER} count --id=${NAME} \
+                      --transcriptome=${ref_gex} \
+                      --fastqs=${FQ_DIR} \
+                      --chemistry=${chemistry} \
+                      --localcores=16 \
+                      --localmem=64
+fi
+
+
 # cluster mode - but it depends on cluster
 if [[ $RUN == 'lsf' ]]; then
   ${CELLRANGER} count --id=${NAME} \

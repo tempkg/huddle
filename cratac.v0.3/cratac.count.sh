@@ -82,6 +82,19 @@ if [[ $RUN == 'local-fc' ]]; then
                     --localmem=64
 fi
 
+
+
+if [[ $RUN == 'local-chem' ]]; then
+    ${CELLRANGER_ATAC} count --id=${NAME} \
+                    --reference=${reference} \
+                    --fastqs=${FQ_DIR} \
+                    --chemistry=${chemistry} \
+                    --localcores=16 \
+                    --localmem=64
+fi
+
+
+
 # cluster mode - but it depends on cluster
 if [[ $RUN == 'lsf' ]]; then
     ${CELLRANGER_ATAC} count --id=${NAME} \
