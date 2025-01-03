@@ -93,7 +93,7 @@ saveRDS(harmony_rna, file=paste0(outdir,'/snrna_harmony.rds'))
 write.table(harmony_rna@meta.data, file = paste0(outdir, '/snrna_harmony.metadata.xls'), sep = "\t", quote=F, col.names = NA)
 
 # plot umap
-p <- DimPlot(harmony_rna, group.by = 'Sample', reduction = "umap.rna", pt.size = 0.1)
+p <- DimPlot(harmony_rna, group.by = 'Sample', reduction = "rna.umap", pt.size = 0.1)
 pdf(paste0(outdir, '/snrna_harmony.umap.pdf'), width = 5.5, height = 4, useDingbats=FALSE)
 print(p)
 dev.off()
@@ -146,12 +146,12 @@ harmony_atac <- CustomizedHarmonyATAC1(combined_snatac)
 saveRDS(harmony_atac, file=paste0(outdir,'/snatac_harmony.rds'))
 write.table(harmony_atac@meta.data, file = paste0(outdir, '/snatac_harmony.metadata.xls'), sep = "\t", quote=F, col.names = NA)
 
-p <- DimPlot(harmony_atac, group.by = 'Sample', reduction = "umap.atac_merge", pt.size = 0.1)
+p <- DimPlot(harmony_atac, group.by = 'Sample', reduction = "atac_merged.umap", pt.size = 0.1)
 pdf(paste0(outdir, '/snatac_merged.umap.pdf'), width = 6.5, height = 5, useDingbats=FALSE)
 print(p)
 dev.off()
 
-p <- DimPlot(harmony_atac, group.by = 'Sample', reduction = "umap.atac", pt.size = 0.1)
+p <- DimPlot(harmony_atac, group.by = 'Sample', reduction = "atac.umap", pt.size = 0.1)
 pdf(paste0(outdir, '/snatac_harmony.umap.pdf'), width = 6.5, height = 5, useDingbats=FALSE)
 print(p)
 dev.off()
