@@ -1,0 +1,12 @@
+ncount_atac_min: 3000
+ncount_atac_max: 1000000
+nucleosomeSignal: 4
+tss_min: 2
+tss_max: 15
+blacklistRatio: 0.05
+pct_readsInPeaks: 0
+ncount_rna_min: 2000
+ncount_rna_max: 600000
+nfeature_rna_min: 500
+nfeature_rna_max: 8000
+percent_mt: 10
