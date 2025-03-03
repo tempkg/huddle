@@ -1,0 +1,5 @@
+cluster: "bsub -J {rule}.{wildcards} -n {resources.threads} -R 'rusage[mem={resources.mem_mb}000] span[hosts=1]' -oo logs/{rule}.{wildcards}.log -eo logs/{rule}.{wildcards}.err"
+default-resources:
+  - mem_mb=4096
+  - threads=2
+
