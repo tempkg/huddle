@@ -1,9 +1,0 @@
-# lsf/config.yaml
-jobs: 10
-executor: local  # Use local executor, but submit jobs via bsub
-cluster: "bsub -M {resources.mem_mb} -W {resources.runtime} -n {resources.threads} -o logs/job_%J.out -e logs/job_%J.err"
-default-resources:
-  - mem_mb=4000
-  - runtime="00:10"
-  - threads=1
-
