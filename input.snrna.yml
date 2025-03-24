@@ -1,0 +1,31 @@
+# 2024-04-10 v0.2
+
+# snRNA/scRNA
+
+# Define malignent cells: 
+# --cutoff_region_size 5 --min_ratio 0.5 --min_cnv 100 --min_gene 20 --cutoff_gain 1.15 --cutoff_loss 0.85
+# (>5Mb with cover 60% cnv genes or 100 cnv genes)
+
+
+parameter:
+  min_region: 5       # 1Mb, 5Mb, 10Mb
+  min_ratio: 0.5      # 0.5 looks ok (snRNA), 0.6(snATAC), 0.75 too strong cutoff
+  min_cnv: 100        # min cnv gene count - 100 genes for large regions
+  min_gene: 20        # skip region if < min_gene
+  cutoff_gain: 1.2    # gain 1.15,1.2
+  cutoff_loss: 0.8    # loss 0.85,0.8
+  rm_ct: 'na'
+  rm_chr: 'na'
+
+input:
+  meta: 'metaData.cellType.xls'
+
+out:
+  outdir: 'out_malignant_cells'
+
+data:
+  icnv_exp: 'final_infercnv.exp_data.rds'
+  hmm_gene: 'HMM_CNV_predictions.HMMi6.hmm_mode-samples.Pnorm_0.5.pred_cnv_genes.dat'
+  hmm_region: 'HMM_CNV_predictions.HMMi6.hmm_mode-samples.Pnorm_0.5.pred_cnv_regions.dat'
+
+
