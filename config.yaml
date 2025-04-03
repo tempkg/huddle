@@ -1,3 +1,0 @@
-bsub: '~/scripts/hpc.bsub.sh'
-rscr: '~/kit/rscript442'
-scr: '~/scripts/seurat5.sct2.R'
