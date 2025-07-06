@@ -18,6 +18,7 @@ options(future.globals.maxSize=2000000000000)
 rds <- 'multiome_integrated_plus.seurat5.rds'
 finfo <- 'sample.group.txt'  # sample group (no header)
 outdir <- 'out_subgroup.harmony'
+group <- 'PF'
 
 seed <- 47
 dim_rna <- 30
@@ -27,6 +28,7 @@ dim_atac <- 20
 GetoptLong(
     "rds=s",       "rds",
     "finfo=s",     "info",
+    "group=s",     "group",
     "outdir=s",    "outdir"
 )
 
@@ -69,13 +71,17 @@ RunHarmonyForSubgroup <- function(obj, group, dim_rna, dim_atac, seed, outdir){
 
 
 
-for (g in unique(info$group)){
-    tarcells <- rownames(seu@meta.data)[seu$group == g]
-    subseu <- subset(seu, cells=tarcells)
-    
-    RunHarmonyForSubgroup(obj=subseu, group=g, dim_rna=dim_rna, dim_atac=dim_atac, seed=seed, outdir=outdir)
+#for (g in unique(info$group)){
+#    tarcells <- rownames(seu@meta.data)[seu$group == g]
+#    subseu <- subset(seu, cells=tarcells)   
+#    RunHarmonyForSubgroup(obj=subseu, group=g, dim_rna=dim_rna, dim_atac=dim_atac, seed=seed, outdir=outdir)
+#}
 
-}
+tarcells <- rownames(seu@meta.data)[seu$group == group]
+subseu <- subset(seu, cells=tarcells) 
+RunHarmonyForSubgroup(obj=subseu, group=group, dim_rna=dim_rna, dim_atac=dim_atac, seed=seed, outdir=outdir)
+
+
 
 
 
