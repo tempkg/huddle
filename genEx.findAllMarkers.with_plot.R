@@ -91,6 +91,7 @@ diff_exp_filtered <- diff_exp %>%
                     filter(!grepl('^LINC', gene)) %>%
                     filter(p_val_adj < 0.0001 & avg_log2FC > 1 & pct.1 > 0.3)
 }
+write.table(diff_exp_filtered, file = paste0(outdir, '/', idents, '.findallmarker.geneExp.filtered.xls'), sep = "\t", quote=FALSE, row.names = F)
 
 
 # plot
