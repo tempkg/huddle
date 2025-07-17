@@ -38,23 +38,14 @@ metadata$lineageBarcode <- lineageBarcode$V2[match(rownames(metadata), lineageBa
 clean_data <- data.frame('cell'=rownames(metadata), 'lineagebarcode'=metadata$lineageBarcode)
 clean_data <- na.omit(clean_data)
 write.table(clean_data, file=paste0(outdir, '/1.cleancells_lineagebarcode.tsv'), sep='\t', quote=F, row.names=F)
-# cell    lineagebarcode   # (with header)
-# AAACCCAAGGAACGTC-1  GACTGTCACTATGACTTTGACTCTGTAACTAAGACCT
-# AAACGAACACTTGTCC-1    GACTGTCACTATGACTTTGACTCTGTAACTAAGACCT,GACTGTCACTATGACGTTGACTCTGTAACTAAGACCT
-
-
-
-#------------ PLUS
 
 # add comma_count
 clean_data$comma_count <- sapply(clean_data$lineagebarcode, function(x){ sum(unlist(strsplit(x, '')) == ',') })
 clean_data$group <- 'Lineage'
 clean_data$group[clean_data$comma_count > 0] <- 'Mixed'
-# cell    lineagebarcode   comma_count    group    
 
 
-# calculate freq for clean LB
-# Double counting of cell counts due to multiple LBs
+
 CalFreqLB <- function(data=NULL){
     # cell with lineage barcodes (one or multiple lineage barcodes) 
     dfreq <- as.data.frame(table(data$lineagebarcode))
@@ -72,19 +63,13 @@ CalFreqLB <- function(data=NULL){
     return(dfreq)
 }
 
-# format multiple lineage barcode
+
 d_lb <- data.frame(clean_data %>% separate_rows(lineagebarcode, sep=','))
 
 d_rank <- CalFreqLB(d_lb)
-#lineagebarcode ncell index_lb ratio
-# GACTGTCACTATGACTTTGACTCTGTAACTAAGACCT  2515      LB1  84.0
-
 write.table(d_rank, paste0(outdir, '/2.cleanLB.freq.tsv'), sep='\t', quote=F, row.names=F)
 
 
-
-#---- add ranked LB  (with Mixed)
-# cell    lineagebarcode   comma_count    group    rankedLB
 split_lb <- strsplit(clean_data$lineagebarcode, ',')
 clean_data$rankLB <- sapply(split_lb, function(x){ 
         matched <- d_rank$index_lb[match(x, d_rank$lineagebarcode)]
@@ -92,63 +77,44 @@ clean_data$rankLB <- sapply(split_lb, function(x){
     })
 
 
-#---- add ranked lineage (with Mixed)
-# cell    lineagebarcode   comma_count    group    rankLB   rankLineage
-clean_data$rankLineage <- clean_data$rankLB
+clean_data$tempLID <- clean_data$rankLB
 clean_data$tempLID[clean_data$comma_count > 0] <- 'Mixed'
 clean_data$tempLID <- gsub("LB", "Lineage", clean_data$tempLID)
 
 
-
-#---- Pure lineage id - without 'Mixed'
-# cell    lineagebarcode   comma_count    group    rankLB   tempLID
 clean_plus <- clean_data
 clean_plus$tempLineage <- clean_plus$tempLID
 clean_plus$tempLineage[clean_plus$comma_count > 0] <- NA
 
-
-# pure lineage id
 d_freq_pure <- as.data.frame(table(clean_plus$tempLineage))
 colnames(d_freq_pure) <- c('lineage', 'ncell')
-total2 <- sum(d_freq_pure$ncell)
+
 d_freq_pure <- d_freq_pure[order(d_freq_pure$ncell, decreasing = T), ]
 row.names(d_freq_pure) <- NULL
 d_freq_pure$pureLineage <- paste0('Lineage-', rownames(d_freq_pure))
 clean_plus$pureLineage <- d_freq_pure$pureLineage[match(clean_plus$tempLineage, d_freq_pure$lineage)]
-# cell    lineagebarcode   comma_count    group    rankLB   tempLID   tempLineage   pureLineage
 
-
-
-
-#---- Adjust and correct lineage-rank for metadata output (*****) 
 final_meta <- clean_data[,c('cell', 'lineagebarcode', 'comma_count', 'group', 'rankLB')]
 final_meta$rankLineage <- clean_plus$pureLineage[match(final_meta$cell, clean_plus$cell)]
 final_meta$rankLineage[is.na(final_meta$rankLineage)] <- 'Non-Lineage'
+write.table(final_meta, paste0(outdir, '/3.metadata.clean_lineage_cells.tsv'), sep='\t', quote=F, row.names=F)
 
-write.table(final_meta, paste0(outdir, '/metadata.clean_lineage_cells.tsv'), sep='\t', quote=F, row.names=F)
 
-
-# output summary corrected lineage %
 df <- as.data.frame(table(final_meta$rankLineage))
 colnames(df) <- c('lineage', 'ncell')
 df <- df[order(df$ncell, decreasing = T), ]
 
-# all lineages
 total_n <- sum(df$ncell)
 df$ratio <- round(df$ncell/total_n * 100, 2)
-write.table(df_pure, paste0(outdir, '/ratio.allLineage.out'), sep='\t', quote=F, row.names=F)
+write.table(df, paste0(outdir, '/4.ratio.allLineage.out'), sep='\t', quote=F, row.names=F)
 
-# pure lineages
 df_pure <- df[df$lineage != 'Non-Lineage', ]
 total_n <- sum(df_pure$ncell)
 df_pure$ratio <- round(df_pure$ncell/total_n * 100, 2)
-write.table(df_pure, paste0(outdir, '/ratio.pureLineage.out'), sep='\t', quote=F, row.names=F)
+write.table(df_pure, paste0(outdir, '/5.ratio.pureLineage.out'), sep='\t', quote=F, row.names=F)
 
 
 
-
-
-#------------ PLOT
 
 PieChart_LineageBarcodeAndCellCounts <- function(df='')
 {
