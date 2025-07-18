@@ -1,7 +1,7 @@
 
 
-ft <- 'data.table' # sample  path
-out <- 'merged_nf.out'
+ft <- 'groups/hs.multiome.22.out' # sample  path
+out <- 'hs22.merged_nf.47.out'
 
 data <- read.table(ft, sep='\t', header=F)
 colnames(data) <- c('sample', 'path')
@@ -9,9 +9,16 @@ colnames(data) <- c('sample', 'path')
 
 d_inf <- NULL
 for (x in data$sample){
-	d <- data[$sample == x, ]
+	print(x)
+	d <- data[data$sample == x, ]
 
-	dnf <- read.table(paste0(d$path, '/nuclear_fraction.tsv'), sep='\t', header=F)
+	file <- paste0(d$path, '/nuclear_fraction.tsv')
+	if (!file.exists(file)){
+		print(paste0(x, ' : No matched file!'))
+		next
+	}
+
+	dnf <- read.table(file, sep='\t', header=F)
 	colnames(dnf) <- c('cell', 'nf')
 	dnf$cell <- paste0(d$sample, '_', dnf$cell)
 	dnf$sample <- x
