@@ -1,8 +1,0 @@
-# v4
-
-zr-fus:
-    name: 'zr_score'
-    label: 'ZR-Fus signal'
-    db_prefix: 'ZRFus'
-    human: 0.2
-    mouse: 0.2
