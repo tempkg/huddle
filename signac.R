@@ -1,0 +1,132 @@
+# Hua Sun
+# 2025-10-27
+
+
+library(Seurat)
+library(Signac)
+library(seuproc)
+library(GenomicRanges)
+library(future)
+
+library(GenomeInfoDb)
+library(EnsDb.Mmusculus.v79)
+library(EnsDb.Hsapiens.v86)
+library(dplyr)
+library(ggplot2)
+library(limma)
+library(biovizBase)
+
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(SeuratDisk)
+
+library(chromVAR)
+library(JASPAR2024)
+library(TFBSTools)
+library(motifmatchr)
+
+library(stringr)
+library(stringi)
+
+library(patchwork)
+library(data.table)
+
+
+library(GetoptLong)
+
+
+dir <- 'sample/outs'
+name <- 'sample'
+ref <- 'hs38'  # mm10,hg38
+min_cells <- 10
+macs2 <- 'macs2'
+seed <- 42
+outdir <- 'out_signac'
+
+GetoptLong(
+    "dir=s",       "dir outs",
+    "name=s",      "sample name",
+    "ref=s",       "ref",
+    "min_cells=i", "min_cells",
+    "macs2=s",     "MACS2 path",
+    "seed=i",      "seed",
+    "extra",       "Extra process",
+    "outdir=s",    "outdir"
+)
+
+set.seed(seed)
+
+dir.create(outdir)
+
+h5 <- paste0(dir, '/filtered_peak_bc_matrix.h5')
+fragment <- paste0(dir, '/fragments.tsv.gz')
+fsc <- paste0(dir, '/singecell.csv')
+
+# read singlecell.csv
+sc_meta <- read.csv( file = fsc, header = TRUE, row.names = 1 )
+
+# set
+macs2 <- '/research/groups/mackgrp/home/common/Software/miniconda3/envs/macs2/bin/macs2'
+annotation <- Annotations(ref)
+genome <- UCSCBSGenome(ref)
+
+print(name)
+print(ref)
+
+
+# Create object
+signac_obj <- CreateSignacObjectFromH5(h5=h5, meta=sc_meta, fragment=fragment, ref=ref, annotation=annotation)
+print('[INFO] Created object')
+print(dim(signac_obj))
+
+signac_obj$Sample <- name
+signac_obj$ref <- ref
+
+
+# QC plot
+p <- QCPlotATAC(seu)
+ggsave(paste0(outdir, '/', name, '.rawdata.qc.pdf'), w=5, h=2.5, useDingbats=T)
+
+
+
+# Filter
+# cell-level filtering
+max_ncount_atac <- Max_nCountX(obj@meta.data$nCount_ATAC, 0.9)
+signac_obj <- subset(
+    x = signac_obj,
+    subset = nCount_peaks > 3000 &
+        nCount_peaks < max_ncount_atac &
+        nucleosome_signal < 4 &
+        TSS.enrichment > 4 &
+        TSS.enrichment < 15 &
+        blacklist_ratio < 0.01 &
+        pct_reads_in_peaks > 40
+)
+print(dim(signac_obj))
+
+# out filtered
+saveRDS(signac_obj, file=paste0(outdir, '/1.snatac.filtered.rds'))
+
+
+
+# Re-Call peaks using MACS2 
+signac_obj <- CallPeaksUsingMACS2(obj=signac_obj, macs2=macs2, new_assay='peaks', annotation = annotation)
+saveRDS(signac_obj, file=paste0(outdir, '/2.snatac.filtered.macs2.rds'))
+
+
+# Normalization and UMAP
+signac_obj <- ComputeLSI(obj=signac_obj, assay='peaks', min_cutoff=10)
+signac_obj <- RunUMAP_Pipe(obj=signac_obj, reduc='lsi', min_dim=2, max_dim=30, clus_algorithm=3, res_clus=0.4, seed=seed)
+
+# out filtered
+saveRDS(signac_obj, file=paste0(outdir, '/3.snatac.filtered.normalized.rds'))
+write.table(signac_obj@meta.data, file = paste0(outdir, "/snatac.filtered.normalized.metaData.xls"), sep="\t", quote=F, col.names = NA)
+
+
+# out umap
+pdf(paste0(outdir, '/umap.snatac.filtered.normalized.pdf'), w=6, h=6)
+p <- DimPlot(signac_obj, reduction='umap', pt.size=0.1)
+print(p)
+dev.off()
+
+
