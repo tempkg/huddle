@@ -32,6 +32,8 @@ outdir <- 'out_snatac_harmony'
 GetoptLong(
     "ids=s",      "id list",
     "ref=s",       "ref",
+    "sdir=s",     "seurat result dir.",
+    "frds=s",     "read file",
     "method=s",    "integration method",
     "seed=i",      "seed",
     "max_dim=i",   "max_dim",
@@ -40,6 +42,8 @@ GetoptLong(
 )
 
 set.seed(seed)
+
+dir.create(outdir)
 
 # read known out dir
 #dir.create(outdir)
