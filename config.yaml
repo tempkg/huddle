@@ -1,0 +1,15 @@
+jobs: 50
+executor: lsf
+lsf:
+  queue: "large_mem"
+  project: "cellsnp_project"
+  resources: "rusage[mem={resources.mem_mb}] span[hosts=1]"
+  jobname: "{rule}.{wildcards.sample}"
+  output: "logs/{rule}.{wildcards.sample}.%J.out"
+  error: "logs/{rule}.{wildcards.sample}.%J.err"
+default-resources:
+  - runtime=43200
+  - mem_mb=8192
+  - cpus=25
+set-resources:
+  cellsnp: ["cpus={threads}", "mem_mb={resources.mem_mb}"]
