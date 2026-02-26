@@ -1,0 +1,25 @@
+# 2026-02-25 v5
+
+input:
+  meta: 'metadata.used.tsv'
+  ctl: 'Control'
+
+out:
+  outdir: 'out_malignant_cells'
+
+data:
+  icnv_exp: 'final_infercnv.exp_data.rds'
+  hmm_gene: 'HMM_CNV_predictions.HMMi6.hmm_mode-samples.Pnorm_0.5.pred_cnv_genes.dat'
+  hmm_region: 'HMM_CNV_predictions.HMMi6.hmm_mode-samples.Pnorm_0.5.pred_cnv_regions.dat'
+
+
+parameter:
+  min_region: 5
+  min_gene: 20
+  min_ratio: 1
+  min_cnv_gene: 100
+  cutoff_gain: 1.15
+  cutoff_loss: 0.85
+  rm_clu: ''
+  rm_chr: ''
+
