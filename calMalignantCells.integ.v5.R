@@ -168,8 +168,9 @@ for (s in unique(df_cnv_gene$sample)){
     # count
     ds_report$n_gene_count <- round(apply(s_regions_gene_count, 1, sum, na.rm=TRUE), 0)
     ds_report$cnv_gene_count <- round(apply(s_cnv_gene_count, 1, sum, na.rm=TRUE), 0)
-    ds_report$cnv_gene_count.mean <- round(apply(s_cnv_gene_count, 1, mean, na.rm=TRUE), 0)
+    #ds_report$cnv_gene_count.mean <- round(apply(s_cnv_gene_count, 1, mean, na.rm=TRUE), 0)
     ds_report$cnv_gene_count.max <- apply(s_cnv_gene_count, 1, max, na.rm=TRUE)
+    
     # ratio
     total_genes <- ncol(d_icnv_exp)
     ds_report$cnv_ratio <- round(ds_report$cnv_gene_count/ds_report$n_gene_count * 100, 3)
@@ -205,7 +206,7 @@ for (s in unique(df_cnv_gene$sample)){
 
 
 print(dim(df_merged))
-df_merged <- df_merged %>% select(Row.names, sample, seurat_clusters, total_cnv.regions, cnv_gene_count.mean, cnv_gene_count.max, cnv_ratio.mean, cnv_ratio.max, gain_ratio.by_allgenes, loss_ratio.by_allgenes, cnv_ratio.by_allgenes, cell_status)
+df_merged <- df_merged %>% select(Row.names, sample, seurat_clusters, total_cnv.regions, n_gene_count, cnv_gene_count, cnv_gene_count.max, cnv_ratio, cnv_ratio.max, cell_status)
 write.table(df_merged, paste0(outdir, '/infercnv.estimate_malignant_cells.', cutoff_region_size, 'Mb.xls'), sep='\t', quote=FALSE, row.names=FALSE)
 
 
