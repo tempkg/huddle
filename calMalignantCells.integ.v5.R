@@ -22,6 +22,7 @@ fmd <- dyml$input$meta
 control <- dyml$input$ctl
 
 cutoff_region_size <- dyml$parameter$min_region
+min_gene <- dyml$parameter$min_gene
 min_ratio <- dyml$parameter$min_ratio
 min_cnv_gene <- dyml$parameter$min_cnv_gene
 
@@ -112,59 +113,88 @@ print(unique(metadata_filtered$seurat_clusters))
 print(nrow(metadata_filtered))
 
 
-d_merged <- ''
+df_merged <- ''
 i <- 0
 for (s in unique(df_cnv_gene$sample)){
-
-    # per sample
     ds <- df_cnv_gene[df_cnv_gene$sample==s,]
 
     # only use metadata barcodes
     ds_report <- metadata_filtered[metadata_filtered$sample==s, c('sample', 'seurat_clusters')]
     cells <- row.names(ds_report)
 
-    ds_exp <- d_icnv_exp_filtered[cells,]
+    s_regions <- c()
+    s_regions_gene_count <- c()
+    s_cnv_gene_count <- c()
+    s_cnv_ratio <- c()
+
+    # region cnv
+    for (r in unique(ds$gene_region_name)){
+
+        genes <- ds$gene[ds$gene_region_name==r]
+
+        # skip regions by gene count
+        n_gene_region <- length(genes)
+        if (n_gene_region < min_gene){
+            print(paste('skip ', r, '-', n_gene_region))
+            next
+        }
+        #print(paste(r, '-', n_gene_region))
+
+        ds_exp <- d_icnv_exp_filtered[cells, genes]
+        total_genes <- length(genes)
+        gain <- rowSums(ds_exp >= cutoff_gain)
+        loss <- rowSums(ds_exp <= cutoff_loss)
 
 
-    # calculate
-    total_genes <- ncol(ds_exp)
-    print(total_genes)
+        # vectors
+        s_regions <- cbind(s_regions, r)
+        s_regions_gene_count <- cbind(s_regions_gene_count, n_gene_region)
 
-    gain <- rowSums(ds_exp >= cutoff_gain)
-    loss <- rowSums(ds_exp <= cutoff_loss)
-    cnv_gene_count <- gain + loss
+        # region cnv gene counts
+        cnv_genes <- gain + loss
+        s_cnv_gene_count <- cbind(s_cnv_gene_count, cnv_genes)
+        colnames(s_cnv_gene_count) <- as.vector(s_regions)
 
-    gain_ratio <- round(gain/total_genes * 100, 2)
-    loss_ratio <- round(loss/total_genes * 100, 2)
+        # region cnv ratio
+        cnv_ratio <- (gain+loss)/total_genes
+        s_cnv_ratio <- cbind(s_cnv_ratio, cnv_ratio)
+        colnames(s_cnv_ratio) <- as.vector(s_regions)
+    }
+    
+    #ds_report$regions <- toString(as.vector(s_regions))
+    #ds_report$cnv_regions <- length(as.vector(s_regions))
+    
+    # count
+    ds_report$cnv_gene_count <- round(apply(s_cnv_gene_count, 1, sum, na.rm=TRUE), 0)
+    #ds_report$cnv_gene_count.max_in_region <- apply(s_cnv_gene_count, 1, max, na.rm=TRUE)
+    
+    # ratio - from regions
+    #ds_report$cnv_ratio.max_in_region <- apply(s_cnv_ratio, 1, max, na.rm=TRUE)
+    #ds_report$cnv_ratio.max_in_region <- round(ds_report$cnv_ratio.max_in_region, 3)
 
-    # global cnv-ratio
-    total_cnv_genes <- gain + loss
-    cnv_ratio <- round(total_cnv_genes/total_genes * 100, 2)
+    # re-calcuate final cnv ratio
+    total_genes <- ncol(filtered_cnv_gene_set)
+    ds_report$cnv_ratio <- round(ds_report$cnv_gene_count/total_genes * 100, 3)
 
-    ds_report$cnv_gene_count <- cnv_gene_count
-    ds_report$cnv_ratio <- cnv_ratio
-    ds_report$gain_ratio <- gain_ratio
-    ds_report$loss_ratio <- loss_ratio
 
     # define malignant
     ds_report$cell_status <- 'Non-malignant'
     ds_report$cell_status[ds_report$cnv_gene_count >= min_cnv_gene & ds_report$cnv_ratio >= min_ratio] <- 'Malignant'
 
-
     i <- i + 1
     if (i==1) {
-        d_merged <- ds_report
+        df_merged <- ds_report
     } else {
-        d_merged <- rbind(d_merged, ds_report)
+        df_merged <- rbind(df_merged, ds_report)
     }
-
 }
 
 
-print(dim(d_merged))
+print(dim(df_merged))
 # regions, n_gene_count, cnv_regions, no need them
-d_merged <- d_merged %>% select(sample, seurat_clusters, cnv_gene_count, cnv_ratio, gain_ratio, loss_ratio, cell_status)
-write.table(d_merged, paste0(outdir, '/infercnv.estimate_malignant_cells.global.xls'), sep='\t', quote=FALSE, col.names=NA)
+#df_merged <- df_merged %>% select(sample, seurat_clusters, cnv_gene_count, cnv_gene_count.max_in_region, cnv_ratio, cnv_ratio.max_in_region, cell_status)
+df_merged <- df_merged %>% select(sample, seurat_clusters, cnv_gene_count, cnv_ratio, cell_status)
+write.table(df_merged, paste0(outdir, '/infercnv.estimate_malignant_cells.', cutoff_region_size, 'Mb.xls'), sep='\t', quote=FALSE, col.names=NA)
 
 
 
@@ -194,8 +224,8 @@ MalignantCellPercentagePerSample <- function(df){
 
 
 # malignant cell percentage per sample
-p <- MalignantCellPercentagePerSample(d_merged)
-sample_size <- length(unique(d_merged$sample))
+p <- MalignantCellPercentagePerSample(df_merged)
+sample_size <- length(unique(df_merged$sample))
 width <- 3.5
 if (sample_size > 10){ width <- 6 }
 ggsave(paste0(outdir, '/malignantCells.sample.pdf'), width = width, height = 3)
@@ -205,7 +235,7 @@ ggsave(paste0(outdir, '/malignantCells.sample.pdf'), width = width, height = 3)
 
 #-------- [Extra] 7. clean reference cells
 ref_clu <- stringr::str_split(control, ',')[[1]]
-d_poor_ref <- d_merged %>% 
+d_poor_ref <- df_merged %>% 
             filter(seurat_clusters %in% ref_clu) %>% 
             filter(cell_status=='Malignant')
 
